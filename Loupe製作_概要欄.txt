@@ -1,0 +1,165 @@
+DavinciResolve ルーペエフェクト作成 (CustomToolを活用) Make "Loupe Effect" 
+
+今回はDIYと全く関係なくDavinciResolveのFusionページで便利な拡大鏡エフェクトを作ってみましたので、その作成方法を動画にしてみました。
+Fusionが気になる初心者の方向けな感じだと思います(私が万年初心者ですがw)
+DavinciResolveはVer20 Studio版で作成しましたが最近のものならバージョンを選ばないと思います。
+
+◆真円Loupe製作◆
+･Displace1の屈折の強度をエクスプレッションし式を入れる(動画時間 04:02)
+(CustomTool1.NumberIn5 - 1) * (1.75 / 9)
+･CustomTool1ノード右クリックからコントロールを編集(動画時間 04:25)
+名前：Number In 5
+ID : NumberIn5
+種類:Number
+ページ : Controls
+アニメート可能
+デフォルト : 6
+範囲 : -1～10
+許可 : -1～10
+Spline Default
+入力 : ScrewControl
+ビュー : None
+センター及びステップ : 空欄
+･CustomTool1 Number In 1 : 枠の明滅の式(動画時間 06:27)
+abs(sin(time * 0.3 * (30 / CustomTool1.NumberIn4 )))
+･CustomTool1 Number In 4 : 動画のフレームレート自動計算式(動画時間 07:08)
+comp:GetPrefs("Comp.FrameFormat.Rate")
+･CustomTool1Number In 2 : ルーペの開閉アニメーション(動画時間 07:48)
+(time - MediaIn1.GlobalIn) < (CustomTool1.NumberIn4 * 0.3) and NumberIn3 * ((time - MediaIn1.GlobalIn) / (CustomTool1.NumberIn4 * 0.3)) or ((time - MediaIn1.GlobalIn) > (comp.RenderEnd - MediaIn1.GlobalIn - CustomTool1.NumberIn4 * 0.3) and NumberIn3 * (1 - ((time - MediaIn1.GlobalIn) - (comp.RenderEnd - MediaIn1.GlobalIn - CustomTool1.NumberIn4 * 0.3)) / (CustomTool1.NumberIn4 * 0.3)) or NumberIn3)
+･マクロ初期設定値(動画時間 09:15)
+Custom tool1
+ Point1 : X=0.5 Y=0.5
+ Number In 3 : 0.2
+ Number In 4 : 30.0
+ Number In 5 : 6.0
+Ellipse2
+ 境界線の幅 : 0.01
+
+･真円ルーペ Macro書き出し設定(動画時間 09:37)
+マクロ名:
+ Loupe
+Marge1:
+ Output 出力のチェックが入っているかチェック
+SoftGlow:
+ グローのサイズ 10.0 0.0 100
+ BlendClone(ブレンド) 1.0 0.0 2.0
+ RedSclae～AlphaScaleの4つ 1.0 0.0 2.0
+Color:
+ TopLeftRed～TopLeftAlphaまで4つ
+ TopLeftAlpha値:0.74 白ならデフォルト1.0 0.0 1.0
+CustomTool1:
+ Output 出力のチェックを外す
+ PointIn1: "Position"に改名＆チェック
+ NumberIn3: "Base Size"に改名＆チェック 0.45 0.0 1.0
+ NumberIn5: "Zoom"に改名＆チェック 6.0 -1.0 10.0
+ NumberIn6: "Use Ellipse"に改名 0
+ NumberIn7: "Ellipse Width"に改名 0.45 0.0 1.0 
+Displace1:
+ 入力にチェックがあるか確認
+Ellipse1:
+ Invert(反転)にチェック
+Ellipse2:
+ BorderWidth(境界線の幅) 0.01 0.0 0.2
+ ソフトエッジにもチェック推奨
+
+◆ 新機能を追加する(Loupe_SP) ◆
+･楕円に切り替え出来るようにする
+Ellipse1とEllipse2の幅のエクスプレッションに (動画時間 15:29)
+  (CustomTool1.NumberIn6 == 1 and CustomTool1.NumberIn7 or CustomTool1.NumberIn3) * CustomTool1.NumberIn2
+Ellipse二つの高さのエクスプレッションに (動画時間 16:21)
+  CustomTool1.NumberIn3 * CustomTool1.NumberIn2
+
+･拡大位置のみをずらす設定(動画時間 17:06)
+CustomTool1を右クリック＞Controlの編集＞IDからPointIn2を探す。
+ 種類:Point
+ ページ:Controls
+ デフォルト値を 0.5 0.5 → 0.0 0.0に変更
+
+ ☆PointIn2をパブリッシュ(パブリッシュすると変な挙動が無くなった)
+
+ Displace1のセンターのエクスプレッションのCustomTool1.PointIn1を次の式に変更(動画時間 17:38)
+  CustomTool1.PointIn1 + CustomTool1.PointIn2
+
+･楕円に角度を付けられるようにする(動画時間 18:02)
+CustomTool1のNumberIn8を角度に使う(要パブリッシュ)
+Ellipse二つの角度をエクスプレッションし"CustomTool1.NumberIn8*100"に (動画時間 18:20)
+
+･CustomToolに新Control(OpnClsTime)を追加して開始終了時のアニメーションを変速に(動画時間 19:02)
+CustomTool右クリック＞コントロールを編集
+ 名前：OpnClsTime
+ ID:OpnClsTime
+ 種類:Number
+ ページ:Controls
+ デフォルト:0.3
+ 範囲0～1
+ 許可0～10
+ Spline:Defaoult
+ 入力:SliderControl
+ ビュー:None
+ センター&ステップ:空欄
+
+･NumberIn2に入れ替える式(動画時間 20:30)
+(time - MediaIn1.GlobalIn) < (CustomTool1.NumberIn4 * CustomTool1.OpnClsTime) and NumberIn3 * ((time - MediaIn1.GlobalIn) / (CustomTool1.NumberIn4 * CustomTool1.OpnClsTime)) or ((time - MediaIn1.GlobalIn) > (comp.RenderEnd - MediaIn1.GlobalIn - CustomTool1.NumberIn4 * CustomTool1.OpnClsTime) and NumberIn3 * (1 - ((time - MediaIn1.GlobalIn) - (comp.RenderEnd - MediaIn1.GlobalIn - CustomTool1.NumberIn4 * CustomTool1.OpnClsTime)) / (CustomTool1.NumberIn4 * CustomTool1.OpnClsTime)) or NumberIn3)
+
+･円の明滅速度を変えるためにコントロールを追加(動画時間 20:32)
+名前とID：FlashSpeed
+種類：Number
+ページ：Controls
+デフォルト：0.3
+範囲：0 ～ 1
+許可：0 ～ 2
+入力：SliderControl
+
+･円の明滅速度を変える式(CustomTool NumberIn1)(動画時間 21:09)
+abs(sin(time * CustomTool1.FlashSpeed * (30 / CustomTool1.NumberIn4 )))
+
+･"Loupe_SP" Macro書き出し設定(動画時間 21:55)
+マクロ名 : Loupe_SP
+Marge1:出力にチェック
+SoftGlow:
+ グローのサイズ 10.0 0.0 100
+ BlendClone(ブレンド) 1.0 0.0 2.0
+ RedSclae～AlphaScaleの4つ 1.0 0.0 2.0
+Color:
+ TopLeftRed～TopLeftAlphaまで4つ
+ TopLeftAlpha値:1
+ 白ならデフォルト1.0 0.0 1.0
+CustomTool1:
+ 出力(OutPut)のチェック外す
+ PointIn1  : "Position"に改名＆チェック
+ PointIn2  : "Zoom Position Offset"に改名＆チェック
+ NumberIn3 : "Base Size"に改名＆チェック 0.45 0.0 1.0
+ NumberIn5 : "Zoom"に改名＆チェック 6.0 -1.0 10.0
+ NumberIn6 : "Use Ellipse" に改名 デフォルト= 0
+ NumberIn7 : "Ellipse Width" に改名 0.45 0.0 1.0
+ NumberIn8 : "Angle" 0.0 0.0 1.0
+ OpnClsTime: "OpenCloseTime"に改名＆チェック 0.3 0.0 1.0
+ FlashSpeed: チェック 0.3 0.0 1.0
+Displace1:入力にチェック
+Ellipse1 :Invert(反転)にチェック
+Ellipse2 :
+ ソフトエッジ 0 0.0 0.1
+ BorderWidth(境界線の幅) 0.01 0.0 0.2
+
+･"Loupe_SP" settingファイル インスペクタ並び順(動画時間 22:23)
+01.Position(CustomTool1:PointIn1)
+02.Base Size(NumberIn3)
+03.Zoom:NumberIn5(NumberIn5)
+04.Zoom Position Offset(CustomTool1:PointIn2)
+05.BorderWidth(Ellipse2)
+06.OpenCloseTime(Loupe Open&Close Animation Time)
+07.SoftEdge(ソフトエッジ)
+08.基本のカラー(BorderWidth Color)
+09.Use Ellipse:0
+10.Ellipse Width
+11.Angle(NumberIn8) 
+12.グローのサイズ(Glow Size)
+13.グローのブレンド
+14.グローのカラー(Glow Color)
+15.グローの明滅速度(FlashSpeed:Default = 0.3,)
+16.反転(Invert)
+
+#DavinciResolve #Fusion #Loupe 
+
+英字風新聞写真URL　illustAC
+https://www.ac-illust.com/main/detail.php?id=23667696
